@@ -1,0 +1,10 @@
+{
+  "name": "terraform-registry-visualizer",
+  "private": true,
+  "type": "module",
+  "version": "0.2.0",
+  "license": "MIT",
+  "scripts": {
+    "build": "node scripts/fetch_and_build.js"
+  }
+}

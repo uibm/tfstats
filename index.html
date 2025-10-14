@@ -1,0 +1,45 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Terraform Registry — Community Stats & Movers</title>
+<meta name="description" content="Daily charts for Terraform Registry providers: period downloads (24h/7d/30d/365d), rank changes, and searchable catalog. Unofficial.">
+<link rel="stylesheet" href="./styles.css"/>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+</head><body>
+<header class="header"><div class="brand"><div class="dot"></div><div>
+<div class="title">Terraform Registry — Community Stats</div>
+<div class="subtitle">Daily snapshots • Period leaderboards • Rank movers • Unofficial</div>
+</div></div></header>
+<main class="main">
+<section class="card">
+  <div class="toolbar">
+    <div><strong>Window:</strong>
+      <select id="windowSelect">
+        <option value="last_24h">Last 24h</option>
+        <option value="last_7d">Last 7 days</option>
+        <option value="last_30d">Last 30 days</option>
+        <option value="last_365d">Last 365 days</option>
+      </select>
+      <span class="tag" id="refDateTag"></span>
+    </div>
+    <div><input id="searchBox" type="search" placeholder="Search provider (namespace/name)..."/></div>
+  </div>
+  <div class="grid">
+    <div class="card"><h2>Top by period <span class="tag" id="topCountTag"></span></h2><div id="chartTop" style="height:420px"></div></div>
+    <div class="card"><h2>Rank movers (up/down)</h2><div id="chartMovers" style="height:420px"></div></div>
+  </div>
+</section>
+<section class="card">
+  <h2>Provider catalog <span class="tag" id="catalogCountTag"></span></h2>
+  <div class="table-wrap">
+    <table id="providersTable"><thead><tr>
+      <th>#</th><th>Provider</th><th>Tier</th><th>Total downloads</th><th id="thPeriod">Period downloads</th><th>Rank Δ</th><th>Source</th>
+    </tr></thead><tbody></tbody></table>
+  </div>
+</section>
+<footer>
+  Built with ❤️ for terraform users. <br/> Data: Terraform Registry (HashiCorp). <br/> Charts: Apache ECharts.<br/>
+  HashiCorp® and Terraform® are trademarks of HashiCorp, Inc. This site is unofficial and for informational purposes only.
+</footer>
+</main>
+<script src="./app.js"></script>
+</body></html>

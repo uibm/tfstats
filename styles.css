@@ -1,0 +1,14 @@
+:root{--neutral-700:#0c0c0e;--neutral-600:#3b3d45;--neutral-500:#656a76;--neutral-400:#8c909c;--neutral-300:#c2c5cb;--neutral-200:#dedfe3;--neutral-100:#f1f2f3;--neutral-50:#fafafa;--neutral-0:#fff;--accent:#a737ff;--ok:#008a22;--crit:#e52228;--radius-xl:16px;--shadow-sm:0 2px 8px rgba(0,0,0,.08)}
+*{box-sizing:border-box}html,body{margin:0;padding:0;background:var(--neutral-50);color:var(--neutral-700);font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica Neue,Arial,Noto Sans,Liberation Sans,sans-serif}
+a{color:var(--accent);text-decoration:none}a:hover{text-decoration:underline}
+.header{background:var(--neutral-700);color:#fff;padding:24px;position:sticky;top:0;z-index:10}.brand{display:flex;align-items:center;gap:14px}.brand .dot{width:12px;height:12px;border-radius:2px;background:var(--accent);box-shadow:0 0 0 3px rgba(167,55,255,.25)}
+.title{font-size:20px;font-weight:700}.subtitle{color:#c2c5cb;font-size:12px}.main{max-width:1200px;margin:24px auto;padding:0 16px}
+.grid{display:grid;grid-template-columns:1fr;gap:16px}@media(min-width:1000px){.grid{grid-template-columns:1fr 1fr}}
+.card{background:#fff;border:1px solid var(--neutral-200);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);padding:16px 16px 8px}
+.card h2{font-size:16px;margin:0 0 8px;display:flex;align-items:center;gap:8px}.card h2 .tag{font-size:11px;background:var(--neutral-100);padding:2px 8px;border-radius:999px;color:#656a76;border:1px solid var(--neutral-200)}
+.toolbar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:8px}
+select,input[type=search]{padding:8px 10px;border-radius:10px;border:1px solid var(--neutral-200);background:#fff;color:#0c0c0e;font-size:14px}
+.table-wrap{overflow:auto;border-radius:10px;border:1px solid var(--neutral-200)}table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 12px;border-bottom:1px solid var(--neutral-100);text-align:left}th{background:var(--neutral-50);position:sticky;top:0;z-index:1}
+.badge{display:inline-block;font-size:11px;padding:2px 8px;border-radius:999px;border:1px solid var(--neutral-200);background:var(--neutral-100);color:#656a76}
+.rank-up{color:var(--ok)}.rank-down{color:var(--crit)}footer{color:#656a76;padding:24px 16px;text-align:center}

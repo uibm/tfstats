@@ -1,0 +1,35 @@
+name: Refresh Terraform Registry data (root)
+on:
+  workflow_dispatch:
+    inputs:
+      note:
+        description: "Optional note for this run"
+        default: ""
+        required: false
+  schedule:
+    # GitHub cron is UTC. 05:01 UTC == 00:01 EST.
+    - cron: '1 5 * * *'
+permissions:
+  contents: write
+
+jobs:
+  fetch-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Build data
+        env: { TZ: Asia/Kolkata }
+        run: |
+          echo "" > .nojekyll
+          npm ci --omit=dev || true
+          npm run build
+      - name: Commit JSON & marker
+        run: |
+          git config user.name "uibm"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add data/* .nojekyll
+          git commit -m "data: refresh $(date +'%Y-%m-%d %H:%M %Z') ${{ github.event.inputs.note }}" || echo "No changes"
+          git push

@@ -1,0 +1,35 @@
+{
+  "date": "2025-10-14",
+  "windows": {
+    "last_24h": {
+      "available": false,
+      "top": [],
+      "moversUp": [],
+      "moversDown": []
+    },
+    "last_7d": {
+      "available": false,
+      "top": [],
+      "moversUp": [],
+      "moversDown": []
+    },
+    "last_30d": {
+      "available": false,
+      "top": [],
+      "moversUp": [],
+      "moversDown": []
+    },
+    "last_365d": {
+      "available": false,
+      "top": [],
+      "moversUp": [],
+      "moversDown": []
+    }
+  },
+  "notes": [
+    "Insufficient history to compute last_24h.",
+    "Insufficient history to compute last_7d.",
+    "Insufficient history to compute last_30d.",
+    "Insufficient history to compute last_365d."
+  ]
+}
