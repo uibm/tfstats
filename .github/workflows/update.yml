@@ -7,7 +7,7 @@ on:
         default: ""
         required: false
   schedule:
-    # GitHub cron is UTC. 05:01 UTC == 00:01 EST.
+    # GitHub cron is UTC. 05:01 UTC == 00:01 EST == 10:31 IST
     - cron: '1 5 * * *'
 permissions:
   contents: write
@@ -27,9 +27,12 @@ jobs:
           npm ci --omit=dev || true
           npm run build
       - name: Commit JSON & marker
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           git config user.name "uibm"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config user.email "uibm@users.noreply.github.com"
+          git remote set-url origin https://uibm:${GH_TOKEN}@github.com/uibm/tfstats.git
           git add data/* .nojekyll
           git commit -m "data: refresh $(date +'%Y-%m-%d %H:%M %Z') ${{ github.event.inputs.note }}" || echo "No changes"
           git push
