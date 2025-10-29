@@ -7,8 +7,8 @@ on:
         default: ""
         required: false
   schedule:
-    # GitHub cron is UTC. 05:01 UTC == 00:01 EST == 10:31 IST
-    - cron: '1 5 * * *'
+    - cron: '1 5 * * *' # 10:31 IST
+
 permissions:
   contents: write
 
@@ -20,13 +20,14 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+
       - name: Build data
         env: { TZ: Asia/Kolkata }
         run: |
           echo "" > .nojekyll
-          npm ci --omit=dev || true
-          npm run build
-      - name: Commit JSON & marker
+          node scripts/fetch.js
+
+      - name: Commit latest data and prune
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
