@@ -24,8 +24,7 @@ jobs:
       - name: Build data
         env: { TZ: Asia/Kolkata }
         run: |
-          cd tfstats
-          echo "" > .nojekyll
+          echo "" > data/.nojekyll
           node scripts/fetch.js
 
       - name: Commit latest data and prune
