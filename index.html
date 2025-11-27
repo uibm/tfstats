@@ -3,98 +3,250 @@
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>tfstats — Terraform Registry Stats</title>
-<meta name="description" content="Daily charts for Terraform Registry providers: period downloads (24h/7d/30d/365d), rank changes, and searchable catalog. Unofficial.">
-<link rel="stylesheet" href="./styles.css"/>
+<title>tfstats — Terraform Registry Analytics</title>
+<meta name="description" content="Daily analytics for Terraform Registry providers: downloads tracking, rank changes, and searchable provider catalog.">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/@phosphor-icons/web"></script>
 <script src="https://cdn.jsdelivr.net/npm/echarts@5/dist/echarts.min.js"></script>
+<script>
+  tailwind.config = {
+    darkMode: 'class',
+    theme: {
+      extend: {
+        colors: {
+          'gray-900': '#000000',
+          'gray-800': '#1f1f1f',
+          'gray-700': '#2e2e2e',
+          'gray-600': '#313131',
+          'gray-500': '#969593',
+          'gray-400': '#a6a6a6',
+          'gray-300': '#bdbbb7',
+          'gray-200': '#f1f1f1',
+          'gray-100': '#ffffff',
+          'green-500': '#45ffbc',
+          'olive-500': '#e3ffa8',
+        },
+        fontFamily: {
+          sans: ['Be Vietnam Pro', 'Inter', '-apple-system', 'BlinkMacSystemFont', 'sans-serif'],
+        }
+      }
+    }
+  }
+</script>
+<link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  body { font-family: 'Be Vietnam Pro', sans-serif; }
+  .chart-container { min-height: 380px; }
+</style>
 </head>
-<body>
-<header class="header">
-  <div class="brand">
-    <div class="dot"></div>
-    <div>
-      <div class="title">tfstats — Terraform Registry</div>
-      <div class="subtitle">Daily snapshots • Period leaders • Rank movers • Unofficial</div>
+<body class="dark bg-gray-900 text-gray-100">
+
+<!-- HEADER -->
+<header class="bg-gray-800 border-b border-gray-600 sticky top-0 z-50">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
+    <div class="flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
+          <i class="ph ph-chart-line-up text-gray-900 text-2xl"></i>
+        </div>
+        <div>
+          <h1 class="text-xl font-bold text-gray-100 leading-tight">tfstats</h1>
+          <p class="text-xs text-gray-400">Terraform Registry Analytics</p>
+        </div>
+      </div>
+      <div class="text-right">
+        <div class="text-sm text-gray-300">Last updated</div>
+        <div class="text-xs text-gray-400" id="headerDate">Loading...</div>
+      </div>
     </div>
   </div>
 </header>
 
-<main class="main">
-  <!-- KPI STRIP -->
-  <section class="kpi-grid">
-    <div class="kpi"><div class="kpi-title">Total Providers</div><div class="kpi-value" id="kpiProviders">—</div><div class="kpi-sub" id="kpiDate">—</div></div>
-    <div class="kpi"><div class="kpi-title">Total Downloads</div><div class="kpi-value" id="kpiDownloads">—</div><div class="kpi-sub">cumulative</div></div>
-    <div class="kpi"><div class="kpi-title">Top Movers</div><div class="kpi-value" id="kpiMovers">—</div><div class="kpi-sub" id="kpiWindow">—</div></div>
-    <div class="kpi"><div class="kpi-title">Official / Partner / Community</div><div class="kpi-value" id="kpiTierSplit">—</div><div class="kpi-sub">counts</div></div>
+<!-- MAIN CONTENT -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+  <!-- KPI CARDS -->
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="text-xs text-gray-400 mb-2">Total Providers</div>
+      <div class="text-3xl font-bold text-gray-100" id="kpiProviders">—</div>
+      <div class="text-xs text-gray-400 mt-1" id="kpiDate">—</div>
+    </div>
+    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="text-xs text-gray-400 mb-2">Total Downloads</div>
+      <div class="text-3xl font-bold text-gray-100" id="kpiDownloads">—</div>
+      <div class="text-xs text-gray-400 mt-1">cumulative</div>
+    </div>
+    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="text-xs text-gray-400 mb-2">Top Movers</div>
+      <div class="text-3xl font-bold text-gray-100" id="kpiMovers">—</div>
+      <div class="text-xs text-gray-400 mt-1" id="kpiWindow">—</div>
+    </div>
+    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="text-xs text-gray-400 mb-2">Official / Partner / Community</div>
+      <div class="text-xl font-bold text-gray-100" id="kpiTierSplit">—</div>
+      <div class="text-xs text-gray-400 mt-1">provider split</div>
+    </div>
   </section>
 
-  <!-- CONTROLS -->
-  <section class="card">
-    <div class="toolbar">
-      <div>
-        <strong>Window:</strong>
-        <select id="windowSelect">
-          <option value="last_24h">Last 24h</option>
+  <!-- STARRED PROVIDER (IBM) -->
+  <section class="bg-gray-800 border-l-4 border-green-500 rounded-xl p-5 mb-6" id="starredProvider" style="display:none;">
+    <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
+      <div class="flex-1">
+        <div class="flex items-center gap-2 mb-2">
+          <i class="ph-fill ph-star text-green-500 text-xl"></i>
+          <h3 class="text-lg font-bold text-gray-100">Featured: <span id="starredName">IBM-Cloud/ibm</span></h3>
+          <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="starredTier">—</span>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
+          <div>
+            <div class="text-xs text-gray-400">Total Downloads</div>
+            <div class="text-lg font-bold text-gray-100" id="starredDownloads">—</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-400">Current Rank</div>
+            <div class="text-lg font-bold text-gray-100" id="starredRank">—</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-400">Rank Change</div>
+            <div class="text-lg font-bold" id="starredDelta">—</div>
+          </div>
+          <div>
+            <div class="text-xs text-gray-400">Period Downloads</div>
+            <div class="text-lg font-bold text-gray-100" id="starredPeriod">—</div>
+          </div>
+        </div>
+      </div>
+      <button onclick="openModal('IBM-Cloud/ibm')" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition text-sm font-semibold whitespace-nowrap">
+        View Details
+      </button>
+    </div>
+  </section>
+
+  <!-- CONTROLS & CHARTS -->
+  <section class="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6">
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="text-sm font-semibold text-gray-300">Time Window:</span>
+        <select id="windowSelect" class="bg-gray-700 border border-gray-600 text-gray-100 text-sm rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none">
+          <option value="last_24h">Last 24 hours</option>
           <option value="last_7d">Last 7 days</option>
           <option value="last_30d">Last 30 days</option>
           <option value="last_365d">Last 365 days</option>
         </select>
-        <span class="tag" id="refDateTag"></span>
+        <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="refDateTag">—</span>
       </div>
-      <div><input id="searchBox" type="search" placeholder="Search provider (namespace/name)…"/></div>
+      <div class="w-full sm:w-auto">
+        <div class="relative">
+          <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
+          <input id="searchBox" type="search" placeholder="Search provider..." class="w-full sm:w-80 bg-gray-700 border border-gray-600 text-gray-100 text-sm rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"/>
+        </div>
+      </div>
     </div>
 
-    <div class="grid">
-      <div class="card">
-        <h2>Top by period <span class="tag" id="topCountTag"></span></h2>
-        <div id="chartTop" class="chart"></div>
+    <!-- CHARTS GRID -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-gray-900 border border-gray-600 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-semibold text-gray-100">Top Providers by Downloads</h2>
+          <span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full" id="topCountTag">—</span>
+        </div>
+        <div id="chartTop" class="chart-container"></div>
       </div>
-      <div class="card">
-        <h2>Rank movers (up/down)</h2>
-        <div id="chartMovers" class="chart"></div>
+
+      <div class="bg-gray-900 border border-gray-600 rounded-xl p-4">
+        <div class="flex items-center justify-between mb-3">
+          <h2 class="text-base font-semibold text-gray-100">Rank Movers</h2>
+          <span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full">Up/Down</span>
+        </div>
+        <div id="chartMovers" class="chart-container"></div>
       </div>
     </div>
   </section>
 
-  <!-- TABLE -->
-  <section class="card">
-    <h2>Provider catalog <span class="tag" id="catalogCountTag"></span></h2>
-    <div class="table-wrap">
-      <table id="providersTable">
-        <thead>
+  <!-- PROVIDER CATALOG TABLE -->
+  <section class="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-lg font-semibold text-gray-100">Provider Catalog</h2>
+      <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="catalogCountTag">—</span>
+    </div>
+    <div class="overflow-x-auto rounded-lg border border-gray-600">
+      <table id="providersTable" class="w-full text-sm">
+        <thead class="bg-gray-700 text-gray-300">
           <tr>
-            <th>#</th><th>Provider</th><th>Tier</th><th>Total downloads</th>
-            <th id="thPeriod">Period downloads</th><th>Rank Δ</th><th>Source</th>
+            <th class="px-4 py-3 text-left font-semibold">#</th>
+            <th class="px-4 py-3 text-left font-semibold">Provider</th>
+            <th class="px-4 py-3 text-left font-semibold">Tier</th>
+            <th class="px-4 py-3 text-left font-semibold">Total Downloads</th>
+            <th class="px-4 py-3 text-left font-semibold" id="thPeriod">Period Downloads</th>
+            <th class="px-4 py-3 text-left font-semibold">Rank Change</th>
+            <th class="px-4 py-3 text-left font-semibold">Source</th>
           </tr>
         </thead>
-        <tbody></tbody>
+        <tbody class="bg-gray-800 divide-y divide-gray-600"></tbody>
       </table>
     </div>
   </section>
 
-  <footer>
-    Data: Terraform Registry (HashiCorp). Charts: Apache ECharts. Unofficial. HashiCorp® and Terraform® are trademarks of HashiCorp, Inc.
+  <!-- FOOTER -->
+  <footer class="text-center text-xs text-gray-400 py-8 border-t border-gray-600">
+    <p>Data from Terraform Registry (HashiCorp). Visualizations by Apache ECharts.</p>
+    <p class="mt-2">This is an unofficial analytics tool. HashiCorp and Terraform are trademarks of HashiCorp, Inc.</p>
   </footer>
+
 </main>
 
 <!-- PROVIDER DETAIL MODAL -->
-<div id="modal" class="modal hidden" aria-modal="true" role="dialog">
-  <div class="modal-dialog">
-    <button class="modal-close" id="modalClose" aria-label="Close">×</button>
-    <div class="modal-header">
-      <div class="pill" id="modalTier">—</div>
-      <h3 id="modalTitle">—</h3>
-      <a id="modalRegistry" target="_blank" rel="noopener">Registry</a>
-      <a id="modalSource" target="_blank" rel="noopener">Source</a>
+<div id="modal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
+  <div class="bg-gray-800 border border-gray-600 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="modalTier">—</span>
+            <h3 class="text-xl font-bold text-gray-100" id="modalTitle">—</h3>
+          </div>
+          <div class="flex items-center gap-3">
+            <a id="modalRegistry" target="_blank" rel="noopener" class="text-sm text-green-500 hover:text-green-400 transition">
+              <i class="ph ph-arrow-square-out"></i> View in Registry
+            </a>
+            <a id="modalSource" target="_blank" rel="noopener" class="text-sm text-green-500 hover:text-green-400 transition">
+              <i class="ph ph-github-logo"></i> Source Code
+            </a>
+          </div>
+        </div>
+        <button id="modalClose" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-100 text-2xl transition">×</button>
+      </div>
+
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <div>
+          <div class="text-xs text-gray-400 mb-1">Total Downloads</div>
+          <div class="text-xl font-bold text-gray-100" id="mTotal">—</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-400 mb-1">Current Rank</div>
+          <div class="text-xl font-bold text-gray-100" id="mRankNow">—</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-400 mb-1">Rank Change</div>
+          <div class="text-xl font-bold text-gray-100" id="mRankDelta">—</div>
+        </div>
+        <div>
+          <div class="text-xs text-gray-400 mb-1">Period Downloads</div>
+          <div class="text-xl font-bold text-gray-100" id="mPeriod">—</div>
+        </div>
+      </div>
+
+      <div class="bg-gray-900 border border-gray-600 rounded-xl p-4 mb-4">
+        <h4 class="text-sm font-semibold text-gray-300 mb-2">Downloads Across Time Windows</h4>
+        <div id="modalChart" class="h-64"></div>
+      </div>
+
+      <div>
+        <h4 class="text-sm font-semibold text-gray-300 mb-2">Description</h4>
+        <p class="text-sm text-gray-300" id="modalDesc">—</p>
+      </div>
     </div>
-    <div class="modal-kpis">
-      <div><div class="k">Total Downloads</div><div class="v" id="mTotal">—</div></div>
-      <div><div class="k">Rank (now)</div><div class="v" id="mRankNow">—</div></div>
-      <div><div class="k">Rank Δ</div><div class="v" id="mRankDelta">—</div></div>
-      <div><div class="k">Period</div><div class="v" id="mPeriod">—</div></div>
-    </div>
-    <div class="modal-chart" id="modalChart"></div>
-    <p class="modal-desc" id="modalDesc">—</p>
   </div>
 </div>
 

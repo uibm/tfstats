@@ -107,10 +107,13 @@ const rankBy = (arr, fn) => {
   return map;
 };
 
-const computeDeltas = (current, prior) => {
+const computeDeltas = (current, prior = {}) => {
   const out = new Map();
+  // Handle case where prior might be undefined or not an object
+  const priorTotals = prior && typeof prior === 'object' ? prior : {};
+
   for (const p of current) {
-    const prev = Number(prior[p.fullName] ?? 0);
+    const prev = Number(priorTotals[p.fullName] ?? 0);
     const delta = Math.max(0, p.totalDownloads - prev);
     out.set(p.fullName, delta);
   }
@@ -140,7 +143,7 @@ async function main() {
 
   for (const w of windows) {
     const ref = findSnapshotNDaysAgo(TODAY, w.days);
-    if (!ref) {
+    if (!ref || !ref.snap || !ref.snap.totals) {
       metrics.windows[w.label] = {
         available: false,
         top: [],
@@ -155,10 +158,15 @@ async function main() {
       ...p,
       periodDownloads: deltas.get(p.fullName) || 0
     }));
+    // Only store essential fields to reduce file size
     const top = withPeriod
       .filter((x) => x.periodDownloads > 0)
       .sort((a, b) => b.periodDownloads - a.periodDownloads)
-      .slice(0, 100);
+      .slice(0, 100)
+      .map(p => ({
+        fullName: p.fullName,
+        periodDownloads: p.periodDownloads
+      }));
 
     const priorList = Object.entries(ref.snap.totals).map(([k, v]) => ({
       fullName: k,
@@ -192,13 +200,15 @@ async function main() {
 
   minify(LATEST_METRICS, metrics);
 
+  // Cleanup old history files - keep only last 400 days (more than 365 for yearly comparisons)
   const files = fs
     .readdirSync(HIST)
     .filter((n) => n.startsWith("providers-") && n.endsWith(".json"))
     .sort();
-  const keep = 150;
+  const keep = 400; // Keep ~13 months of history
   if (files.length > keep) {
     const toDelete = files.slice(0, files.length - keep);
+    console.log(`[cleanup] Removing ${toDelete.length} old history files`);
     for (const f of toDelete) fs.unlinkSync(path.join(HIST, f));
   }
   console.log("[done]");
