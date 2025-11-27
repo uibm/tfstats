@@ -1,5 +1,4 @@
-name: Refresh Terraform Registry Data
-
+name: Refresh Terraform Registry data (root)
 on:
   workflow_dispatch:
     inputs:
@@ -8,7 +7,7 @@ on:
         default: ""
         required: false
   schedule:
-    - cron: '1 5 * * *' # Daily at 10:31 AM IST (5:01 AM UTC)
+    - cron: '1 5 * * *' # 10:31 IST
 
 permissions:
   contents: write
@@ -16,27 +15,18 @@ permissions:
 jobs:
   fetch-and-build:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: tfstats
-
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 20
 
-      - name: Fetch and process Terraform provider data
-        env:
-          TZ: Asia/Kolkata
+      - name: Build data
+        env: { TZ: Asia/Kolkata }
         run: |
-          echo "Starting data fetch at $(date)"
+          cd tfstats
           echo "" > .nojekyll
           node scripts/fetch.js
-          echo "Data fetch completed"
 
       - name: Commit latest data and prune
         env:
@@ -44,36 +34,25 @@ jobs:
         run: |
           git config user.name "uibm"
           git config user.email "uibm@users.noreply.github.com"
-          git remote set-url origin https://uibm:${GH_TOKEN}@github.com/uibm/tfstats.git
-          git add data/* .nojekyll
+          git remote set-url origin https://uibm:${GH_TOKEN}@github.com/${{ github.repository }}.git
+          git add tfstats/data/* tfstats/.nojekyll
+          git commit -m "data: refresh $(date +'%Y-%m-%d %H:%M %Z') ${{ github.event.inputs.note }}" || echo "No changes"
 
-          if git diff --staged --quiet; then
-            echo "No changes to commit"
-          else
-            TIMESTAMP=$(date +'%Y-%m-%d %H:%M %Z')
-            NOTE="${{ github.event.inputs.note }}"
-            if [ -n "$NOTE" ]; then
-              git commit -m "chore(data): refresh ${TIMESTAMP} - ${NOTE}"
+          # Push with retry logic for network resilience
+          max_retries=4
+          retry_delay=2
+          for i in $(seq 1 $max_retries); do
+            if git push; then
+              echo "Successfully pushed changes"
+              break
             else
-              git commit -m "chore(data): refresh ${TIMESTAMP}"
-            fi
-
-            # Push with retry logic for network resilience
-            max_retries=4
-            retry_delay=2
-            for i in $(seq 1 $max_retries); do
-              if git push; then
-                echo "Successfully pushed changes"
-                break
+              if [ $i -lt $max_retries ]; then
+                echo "Push failed, retrying in ${retry_delay}s... (attempt $i/$max_retries)"
+                sleep $retry_delay
+                retry_delay=$((retry_delay * 2))
               else
-                if [ $i -lt $max_retries ]; then
-                  echo "Push failed, retrying in ${retry_delay}s... (attempt $i/$max_retries)"
-                  sleep $retry_delay
-                  retry_delay=$((retry_delay * 2))
-                else
-                  echo "Failed to push after $max_retries attempts"
-                  exit 1
-                fi
+                echo "Failed to push after $max_retries attempts"
+                exit 1
               fi
-            done
-          fi
+            fi
+          done
