@@ -34,7 +34,7 @@ jobs:
           git config user.name "uibm"
           git config user.email "uibm@users.noreply.github.com"
           git remote set-url origin https://uibm:${GH_TOKEN}@github.com/${{ github.repository }}.git
-          git add tfstats/data/* tfstats/.nojekyll
+          git add data/* tfstats/.nojekyll
           git commit -m "data: refresh $(date +'%Y-%m-%d %H:%M %Z') ${{ github.event.inputs.note }}" || echo "No changes"
 
           # Push with retry logic for network resilience
