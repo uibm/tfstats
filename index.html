@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="dark">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1"/>
@@ -35,220 +35,551 @@
 </script>
 <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
-  body { font-family: 'Be Vietnam Pro', sans-serif; }
+  body { font-family: 'Be Vietnam Pro', sans-serif; scroll-behavior: smooth; }
   .chart-container { min-height: 380px; }
+
+  /* ── Smooth theme transitions (exclude canvas to avoid fighting ECharts) ── */
+  body, header, main, footer, section, article, aside,
+  div, span, p, h1, h2, h3, h4, h5, h6,
+  button, a, input, select, option, label,
+  table, thead, tbody, tr, th, td, ul, li {
+    transition: background-color 0.22s ease, border-color 0.22s ease,
+                color 0.15s ease, box-shadow 0.2s ease;
+  }
+
+  /* ── Loading skeleton shimmer ── */
+  .skeleton {
+    background: linear-gradient(90deg, #2e2e2e 25%, #404040 50%, #2e2e2e 75%);
+    background-size: 200% 100%;
+    animation: skeleton-shimmer 1.6s infinite;
+    border-radius: 5px;
+    display: inline-block;
+  }
+  @keyframes skeleton-shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  /* ── Modal fade + scale animation ── */
+  #modal {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+  #modal.open {
+    opacity: 1;
+  }
+  #modal-inner {
+    transform: scale(0.94) translateY(10px);
+    opacity: 0;
+    transition: transform 0.22s ease, opacity 0.22s ease;
+  }
+  #modal.open #modal-inner {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+
+  /* ── Theme toggle pills ── */
+  .theme-btn {
+    width: 30px; height: 30px;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 7px;
+    border: 1px solid transparent;
+    cursor: pointer;
+    font-size: 15px;
+    background: transparent;
+    color: #969593;
+    transition: background 0.15s, border-color 0.15s, color 0.15s, transform 0.1s;
+  }
+  .theme-btn:hover { transform: scale(1.12); color: #f1f1f1; }
+  .theme-btn.active { border-color: #45ffbc; background: rgba(69,255,188,0.13); color: #45ffbc; }
+
+  /* ── KPI card lift on hover ── */
+  .kpi-card {
+    transition: transform 0.16s ease, box-shadow 0.16s ease,
+                background-color 0.22s ease, border-color 0.22s ease;
+  }
+  .kpi-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px rgba(0,0,0,0.35);
+  }
+
+  /* ── Scroll-to-top button ── */
+  #scrollTop {
+    position: fixed; bottom: 24px; right: 24px;
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    opacity: 0; pointer-events: none;
+    transform: translateY(10px);
+    transition: opacity 0.2s ease, transform 0.2s ease,
+                background-color 0.22s ease, border-color 0.22s ease;
+    z-index: 40;
+    background: #2e2e2e;
+    border: 1px solid #313131;
+    color: #bdbbb7;
+    font-size: 16px;
+  }
+  #scrollTop.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+  #scrollTop:hover { background: #3a3a3a; color: #f1f1f1; }
+
+  /* ── Toast notification ── */
+  #toast {
+    position: fixed; bottom: 24px; left: 50%;
+    transform: translateX(-50%) translateY(14px);
+    min-width: 260px; max-width: 90vw;
+    padding: 11px 20px;
+    border-radius: 10px;
+    font-size: 13px; font-weight: 500;
+    opacity: 0; pointer-events: none;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    z-index: 99;
+    background: #1f1f1f;
+    border: 1px solid #313131;
+    color: #f1f1f1;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  #toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+  #toast.toast-error  { border-color: #dc2626; }
+  #toast.toast-ok     { border-color: #45ffbc; }
+
+  /* ── Table row tap feedback ── */
+  tbody tr { transition: background-color 0.1s ease; }
+  tbody tr:active { background-color: rgba(69,255,188,0.07) !important; }
+
+  /* ── Subtle zebra striping ── */
+  tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.018); }
+
+  /* ── Focus ring ── */
+  :focus-visible {
+    outline: 2px solid #45ffbc;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* ── Custom scrollbar ── */
+  ::-webkit-scrollbar { width: 6px; height: 6px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: #313131; border-radius: 3px; }
+  ::-webkit-scrollbar-thumb:hover { background: #969593; }
+
+  /* ══════════════════════════════════════════════════
+     LIGHT THEME
+  ══════════════════════════════════════════════════ */
+  [data-theme="light"] { color-scheme: light; }
+  [data-theme="light"] body { background-color: #f1f5f9 !important; color: #0f172a; }
+  [data-theme="light"] .bg-gray-900 { background-color: #f1f5f9 !important; }
+  [data-theme="light"] .bg-gray-800 { background-color: #ffffff !important; }
+  [data-theme="light"] .bg-gray-700 { background-color: #f0f4f8 !important; }
+  [data-theme="light"] .bg-gray-600 { background-color: #e2e8f0 !important; }
+  [data-theme="light"] .text-gray-100 { color: #0f172a !important; }
+  [data-theme="light"] .text-gray-300 { color: #374151 !important; }
+  [data-theme="light"] .text-gray-400 { color: #6b7280 !important; }
+  [data-theme="light"] .text-gray-500 { color: #9ca3af !important; }
+  [data-theme="light"] .border-gray-600 { border-color: #e2e8f0 !important; }
+  [data-theme="light"] .divide-gray-600 > * + * { border-color: #e2e8f0 !important; }
+  [data-theme="light"] .text-green-500 { color: #059669 !important; }
+  [data-theme="light"] .bg-green-500  { background-color: #059669 !important; }
+  [data-theme="light"] .border-green-500 { border-color: #059669 !important; }
+  [data-theme="light"] .hover\:text-green-400:hover { color: #047857 !important; }
+  [data-theme="light"] .focus\:ring-green-500:focus { --tw-ring-color: #059669 !important; }
+  [data-theme="light"] .text-blue-400  { color: #2563eb !important; }
+  [data-theme="light"] .border-blue-500 { border-color: #2563eb !important; }
+  [data-theme="light"] .theme-btn.active {
+    border-color: #059669;
+    background: rgba(5,150,105,0.12);
+    color: #059669;
+  }
+  [data-theme="light"] :focus-visible { outline-color: #059669; }
+  [data-theme="light"] .skeleton {
+    background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+    background-size: 200% 100%;
+  }
+  [data-theme="light"] ::-webkit-scrollbar-thumb { background: #cbd5e1; }
+  [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+  [data-theme="light"] .kpi-card:hover { box-shadow: 0 10px 28px rgba(0,0,0,0.1) !important; }
+  [data-theme="light"] tbody tr:active { background-color: rgba(5,150,105,0.07) !important; }
+  [data-theme="light"] tbody tr:nth-child(even) { background-color: rgba(0,0,0,0.022) !important; }
+  [data-theme="light"] #scrollTop { background: #1e293b; color: #f8fafc; border-color: transparent; }
+  [data-theme="light"] #scrollTop:hover { background: #0f172a; }
+  [data-theme="light"] #toast { background: #1e293b; color: #f8fafc; border-color: #334155; }
+  [data-theme="light"] #toast.toast-error { border-color: #dc2626; }
+  [data-theme="light"] #toast.toast-ok   { border-color: #059669; }
+
+  /* ══════════════════════════════════════════════════
+     COLORFUL / AURORA THEME
+  ══════════════════════════════════════════════════ */
+  [data-theme="colorful"] { color-scheme: dark; }
+  [data-theme="colorful"] body { background-color: #0d0b1e !important; color: #f0e6ff; }
+  [data-theme="colorful"] .bg-gray-900 { background-color: #0d0b1e !important; }
+  [data-theme="colorful"] .bg-gray-800 { background-color: #1a1535 !important; }
+  [data-theme="colorful"] .bg-gray-700 { background-color: #251d4a !important; }
+  [data-theme="colorful"] .bg-gray-600 { background-color: #2f255a !important; }
+  [data-theme="colorful"] .text-gray-100 { color: #f0e6ff !important; }
+  [data-theme="colorful"] .text-gray-300 { color: #c4b5fd !important; }
+  [data-theme="colorful"] .text-gray-400 { color: #a78bfa !important; }
+  [data-theme="colorful"] .text-gray-500 { color: #7c6fa0 !important; }
+  [data-theme="colorful"] .border-gray-600 { border-color: #3b2f6e !important; }
+  [data-theme="colorful"] .divide-gray-600 > * + * { border-color: #3b2f6e !important; }
+  [data-theme="colorful"] .text-green-500 { color: #a78bfa !important; }
+  [data-theme="colorful"] .bg-green-500  { background-color: #7c3aed !important; }
+  [data-theme="colorful"] .border-green-500 { border-color: #7c3aed !important; }
+  [data-theme="colorful"] .hover\:text-green-400:hover { color: #c4b5fd !important; }
+  [data-theme="colorful"] .focus\:ring-green-500:focus { --tw-ring-color: #7c3aed !important; }
+  [data-theme="colorful"] .text-red-500  { color: #fb7185 !important; }
+  [data-theme="colorful"] .text-blue-400 { color: #60a5fa !important; }
+  [data-theme="colorful"] .border-blue-500 { border-color: #60a5fa !important; }
+  [data-theme="colorful"] .theme-btn.active {
+    border-color: #7c3aed;
+    background: rgba(124,58,237,0.22);
+    color: #c4b5fd;
+  }
+  [data-theme="colorful"] :focus-visible { outline-color: #a78bfa; }
+  [data-theme="colorful"] .skeleton {
+    background: linear-gradient(90deg, #251d4a 25%, #2f255a 50%, #251d4a 75%);
+    background-size: 200% 100%;
+  }
+  [data-theme="colorful"] ::-webkit-scrollbar-thumb { background: #3b2f6e; }
+  [data-theme="colorful"] ::-webkit-scrollbar-thumb:hover { background: #6d28d9; }
+  [data-theme="colorful"] tbody tr:active { background-color: rgba(124,58,237,0.1) !important; }
+  [data-theme="colorful"] tbody tr:nth-child(even) { background-color: rgba(255,255,255,0.025) !important; }
+  [data-theme="colorful"] #scrollTop { background: #251d4a; color: #c4b5fd; border-color: #3b2f6e; }
+  [data-theme="colorful"] #scrollTop:hover { background: #2f255a; color: #f0e6ff; }
+  [data-theme="colorful"] #toast.toast-error { border-color: #fb7185; }
+  [data-theme="colorful"] #toast.toast-ok   { border-color: #a78bfa; }
 </style>
 </head>
 <body class="dark bg-gray-900 text-gray-100">
 
-<!-- HEADER -->
-<header class="bg-gray-800 border-b border-gray-600 sticky top-0 z-50">
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
-    <div class="flex items-center justify-between">
+<!-- ═══════════════════════════════════════ HEADER ═══ -->
+<header class="bg-gray-800 border-b border-gray-600 sticky top-0 z-50" role="banner">
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
+    <div class="flex items-center justify-between gap-4">
+
+      <!-- Logo + title -->
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-green-500 rounded-xl flex items-center justify-center">
-          <i class="ph ph-chart-line-up text-gray-900 text-2xl"></i>
+        <div class="w-9 h-9 bg-green-500 rounded-xl flex items-center justify-center flex-shrink-0" aria-hidden="true">
+          <i class="ph ph-chart-line-up text-gray-900 text-xl"></i>
         </div>
         <div>
-          <h1 class="text-xl font-bold text-gray-100 leading-tight">tfstats</h1>
+          <h1 class="text-base font-bold text-gray-100 leading-tight">tfstats</h1>
           <p class="text-xs text-gray-400">Terraform Registry Analytics</p>
         </div>
       </div>
-      <div class="text-right">
-        <div class="text-sm text-gray-300">Last updated</div>
-        <div class="text-xs text-gray-400" id="headerDate">Loading...</div>
+
+      <div class="flex items-center gap-3">
+        <!-- Theme toggle -->
+        <div class="flex items-center gap-0.5 bg-gray-700 rounded-xl p-1 border border-gray-600"
+             role="group" aria-label="Choose theme">
+          <button class="theme-btn active" data-theme-target="dark"
+                  title="Dark theme" aria-pressed="true" aria-label="Dark theme">
+            <i class="ph ph-moon"></i>
+          </button>
+          <button class="theme-btn" data-theme-target="light"
+                  title="Light theme" aria-pressed="false" aria-label="Light theme">
+            <i class="ph ph-sun"></i>
+          </button>
+          <button class="theme-btn" data-theme-target="colorful"
+                  title="Aurora theme" aria-pressed="false" aria-label="Aurora theme">
+            <i class="ph ph-magic-wand"></i>
+          </button>
+        </div>
+
+        <!-- Last updated (hidden on very small screens) -->
+        <div class="text-right hidden sm:block">
+          <div class="text-xs text-gray-400">Last updated</div>
+          <div class="text-xs font-medium text-gray-300" id="headerDate">
+            <span class="skeleton w-20 h-3"></span>
+          </div>
+        </div>
       </div>
+
     </div>
   </div>
 </header>
 
-<!-- MAIN CONTENT -->
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<!-- ═══════════════════════════════════════ MAIN ═══ -->
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8" role="main">
 
   <!-- KPI CARDS -->
-  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
-      <div class="text-xs text-gray-400 mb-2">Total Providers</div>
-      <div class="text-3xl font-bold text-gray-100" id="kpiProviders">—</div>
-      <div class="text-xs text-gray-400 mt-1" id="kpiDate">—</div>
+  <section class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6" aria-label="Key metrics">
+
+    <div class="kpi-card bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2.5">
+        <i class="ph ph-package text-green-500 text-lg" aria-hidden="true"></i>
+        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Total Providers</span>
+      </div>
+      <div class="text-3xl font-bold text-gray-100" id="kpiProviders">
+        <span class="skeleton w-14 h-8"></span>
+      </div>
+      <div class="text-xs text-gray-400 mt-1.5" id="kpiDate">—</div>
     </div>
-    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
-      <div class="text-xs text-gray-400 mb-2">Total Downloads</div>
-      <div class="text-3xl font-bold text-gray-100" id="kpiDownloads">—</div>
-      <div class="text-xs text-gray-400 mt-1">cumulative</div>
+
+    <div class="kpi-card bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2.5">
+        <i class="ph ph-download-simple text-green-500 text-lg" aria-hidden="true"></i>
+        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Total Downloads</span>
+      </div>
+      <div class="text-3xl font-bold text-gray-100" id="kpiDownloads">
+        <span class="skeleton w-20 h-8"></span>
+      </div>
+      <div class="text-xs text-gray-400 mt-1.5">cumulative all-time</div>
     </div>
-    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
-      <div class="text-xs text-gray-400 mb-2">Top Movers</div>
-      <div class="text-3xl font-bold text-gray-100" id="kpiMovers">—</div>
-      <div class="text-xs text-gray-400 mt-1" id="kpiWindow">—</div>
+
+    <div class="kpi-card bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2.5">
+        <i class="ph ph-trend-up text-green-500 text-lg" aria-hidden="true"></i>
+        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Top Movers</span>
+      </div>
+      <div class="text-3xl font-bold text-gray-100" id="kpiMovers">
+        <span class="skeleton w-10 h-8"></span>
+      </div>
+      <div class="text-xs text-gray-400 mt-1.5" id="kpiWindow">—</div>
     </div>
-    <div class="bg-gray-800 border border-gray-600 rounded-2xl p-5">
-      <div class="text-xs text-gray-400 mb-2">Official / Partner / Community</div>
-      <div class="text-xl font-bold text-gray-100" id="kpiTierSplit">—</div>
-      <div class="text-xs text-gray-400 mt-1">provider split</div>
+
+    <div class="kpi-card bg-gray-800 border border-gray-600 rounded-2xl p-5">
+      <div class="flex items-center gap-2 mb-2.5">
+        <i class="ph ph-chart-pie-slice text-green-500 text-lg" aria-hidden="true"></i>
+        <span class="text-xs text-gray-400 font-medium uppercase tracking-wide">Official / Partner / Community</span>
+      </div>
+      <div class="text-xl font-bold text-gray-100" id="kpiTierSplit">
+        <span class="skeleton w-24 h-7"></span>
+      </div>
+      <div class="text-xs text-gray-400 mt-1.5">provider tier split</div>
     </div>
+
   </section>
 
-  <!-- STARRED PROVIDER (IBM) -->
-  <section class="bg-gray-800 border-l-4 border-green-500 rounded-xl p-5 mb-6" id="starredProvider" style="display:none;">
+  <!-- STARRED / FEATURED PROVIDER -->
+  <section class="bg-gray-800 border-l-4 border-green-500 rounded-xl p-5 mb-6"
+           id="starredProvider" style="display:none;" aria-label="Featured provider">
     <div class="flex flex-col sm:flex-row items-start justify-between gap-4">
-      <div class="flex-1">
-        <div class="flex items-center gap-2 mb-2">
-          <i class="ph-fill ph-star text-green-500 text-xl"></i>
-          <h3 class="text-lg font-bold text-gray-100">Featured: <span id="starredName">IBM-Cloud/ibm</span></h3>
-          <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="starredTier">—</span>
+      <div class="flex-1 min-w-0">
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          <i class="ph-fill ph-star text-green-500 text-xl" aria-hidden="true"></i>
+          <h3 class="text-base font-bold text-gray-100">
+            Featured: <span id="starredName">IBM-Cloud/ibm</span>
+          </h3>
+          <span class="text-xs bg-gray-700 text-gray-300 px-2.5 py-0.5 rounded-full border border-gray-600"
+                id="starredTier">—</span>
         </div>
         <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mt-3">
           <div>
-            <div class="text-xs text-gray-400">Total Downloads</div>
+            <div class="text-xs text-gray-400 mb-0.5">Total Downloads</div>
             <div class="text-lg font-bold text-gray-100" id="starredDownloads">—</div>
           </div>
           <div>
-            <div class="text-xs text-gray-400">Current Rank</div>
+            <div class="text-xs text-gray-400 mb-0.5">Current Rank</div>
             <div class="text-lg font-bold text-gray-100" id="starredRank">—</div>
           </div>
           <div>
-            <div class="text-xs text-gray-400">Rank Change</div>
+            <div class="text-xs text-gray-400 mb-0.5">Rank Change</div>
             <div class="text-lg font-bold" id="starredDelta">—</div>
           </div>
           <div>
-            <div class="text-xs text-gray-400">Period Downloads</div>
+            <div class="text-xs text-gray-400 mb-0.5">Period Downloads</div>
             <div class="text-lg font-bold text-gray-100" id="starredPeriod">—</div>
           </div>
         </div>
       </div>
-      <button onclick="openModal('IBM-Cloud/ibm')" class="px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg transition text-sm font-semibold whitespace-nowrap">
+      <button onclick="openModal('IBM-Cloud/ibm')"
+              class="flex-shrink-0 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-gray-100 rounded-lg text-sm font-semibold whitespace-nowrap focus:ring-2 focus:ring-green-500 focus:outline-none">
         View Details
       </button>
     </div>
   </section>
 
-  <!-- CONTROLS & CHARTS -->
+  <!-- CONTROLS + CHARTS -->
   <section class="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6">
+
+    <!-- Controls row -->
     <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
       <div class="flex items-center gap-3 flex-wrap">
-        <span class="text-sm font-semibold text-gray-300">Time Window:</span>
-        <select id="windowSelect" class="bg-gray-700 border border-gray-600 text-gray-100 text-sm rounded-lg px-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none">
+        <label for="windowSelect" class="text-sm font-semibold text-gray-300">Time Window:</label>
+        <select id="windowSelect"
+                class="bg-gray-700 border border-gray-600 text-gray-100 text-sm rounded-lg px-3 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none cursor-pointer">
           <option value="last_24h">Last 24 hours</option>
           <option value="last_7d">Last 7 days</option>
           <option value="last_30d">Last 30 days</option>
           <option value="last_365d">Last 365 days</option>
         </select>
-        <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="refDateTag">—</span>
+        <span class="text-xs bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full border border-gray-600"
+              id="refDateTag" aria-live="polite">—</span>
       </div>
       <div class="w-full sm:w-auto">
         <div class="relative">
-          <i class="ph ph-magnifying-glass absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400"></i>
-          <input id="searchBox" type="search" placeholder="Search provider..." class="w-full sm:w-80 bg-gray-700 border border-gray-600 text-gray-100 text-sm rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none"/>
+          <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none text-sm" aria-hidden="true"></i>
+          <input id="searchBox" type="search" placeholder="Search provider…"
+                 autocomplete="off" spellcheck="false"
+                 class="w-full sm:w-72 bg-gray-700 border border-gray-600 text-gray-100 text-sm rounded-lg pl-9 pr-4 py-2 focus:ring-2 focus:ring-green-500 focus:outline-none placeholder-gray-500"
+                 aria-label="Search providers"/>
         </div>
       </div>
     </div>
 
-    <!-- CHARTS GRID -->
+    <!-- Charts -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-gray-900 border border-gray-600 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold text-gray-100">Top Providers by Downloads</h2>
-          <span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full" id="topCountTag">—</span>
+          <h2 class="text-sm font-semibold text-gray-100">Top Providers by Downloads</h2>
+          <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full"
+                id="topCountTag">—</span>
         </div>
-        <div id="chartTop" class="chart-container"></div>
+        <div id="chartTop" class="chart-container" role="img" aria-label="Top providers bar chart"></div>
       </div>
 
       <div class="bg-gray-900 border border-gray-600 rounded-xl p-4">
         <div class="flex items-center justify-between mb-3">
-          <h2 class="text-base font-semibold text-gray-100">Rank Movers</h2>
-          <span class="text-xs bg-gray-700 text-gray-300 px-2 py-1 rounded-full">Up/Down</span>
+          <h2 class="text-sm font-semibold text-gray-100">Rank Movers</h2>
+          <span class="text-xs bg-gray-700 text-gray-300 px-2 py-0.5 rounded-full">▲ Up · ▼ Down</span>
         </div>
-        <div id="chartMovers" class="chart-container"></div>
+        <div id="chartMovers" class="chart-container" role="img" aria-label="Rank movers chart"></div>
       </div>
     </div>
+
   </section>
 
-  <!-- PROVIDER CATALOG TABLE -->
-  <section class="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6">
+  <!-- PROVIDER CATALOG -->
+  <section class="bg-gray-800 border border-gray-600 rounded-2xl p-6 mb-6" aria-label="Provider catalog">
     <div class="flex items-center justify-between mb-4">
       <h2 class="text-lg font-semibold text-gray-100">Provider Catalog</h2>
-      <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="catalogCountTag">—</span>
+      <span class="text-xs bg-gray-700 text-gray-300 px-2.5 py-1 rounded-full border border-gray-600"
+            id="catalogCountTag" aria-live="polite">—</span>
     </div>
-    <div class="overflow-x-auto rounded-lg border border-gray-600">
-      <table id="providersTable" class="w-full text-sm">
-        <thead class="bg-gray-700 text-gray-300">
+
+    <div class="overflow-x-auto rounded-xl border border-gray-600" id="tableWrapper">
+      <table id="providersTable" class="w-full text-sm" aria-label="Terraform providers list">
+        <thead class="bg-gray-700 text-gray-400">
           <tr>
-            <th class="px-4 py-3 text-left font-semibold">#</th>
-            <th class="px-4 py-3 text-left font-semibold">Provider</th>
-            <th class="px-4 py-3 text-left font-semibold">Tier</th>
-            <th class="px-4 py-3 text-left font-semibold">Total Downloads</th>
-            <th class="px-4 py-3 text-left font-semibold" id="thPeriod">Period Downloads</th>
-            <th class="px-4 py-3 text-left font-semibold">Rank Change</th>
-            <th class="px-4 py-3 text-left font-semibold">Source</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide w-12" scope="col">#</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" scope="col">Provider</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" scope="col">Tier</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" scope="col">Total Downloads</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" scope="col" id="thPeriod">Period Downloads</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" scope="col">Rank Δ</th>
+            <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide" scope="col">Source</th>
           </tr>
         </thead>
-        <tbody class="bg-gray-800 divide-y divide-gray-600"></tbody>
+        <tbody class="bg-gray-800 divide-y divide-gray-600" id="tableBody">
+          <!-- Loading skeleton rows -->
+          <tr class="skeleton-row"><td colspan="7" class="px-4 py-3.5"><span class="skeleton w-full h-4"></span></td></tr>
+          <tr class="skeleton-row"><td colspan="7" class="px-4 py-3.5"><span class="skeleton w-4/5 h-4"></span></td></tr>
+          <tr class="skeleton-row"><td colspan="7" class="px-4 py-3.5"><span class="skeleton w-full h-4"></span></td></tr>
+          <tr class="skeleton-row"><td colspan="7" class="px-4 py-3.5"><span class="skeleton w-2/3 h-4"></span></td></tr>
+          <tr class="skeleton-row"><td colspan="7" class="px-4 py-3.5"><span class="skeleton w-5/6 h-4"></span></td></tr>
+          <tr class="skeleton-row"><td colspan="7" class="px-4 py-3.5"><span class="skeleton w-full h-4"></span></td></tr>
+        </tbody>
       </table>
+    </div>
+
+    <!-- Empty state (search yields no results) -->
+    <div id="emptyState" class="hidden py-16 text-center">
+      <i class="ph ph-magnifying-glass text-4xl text-gray-500 mb-3 block" aria-hidden="true"></i>
+      <p class="text-gray-300 font-semibold">No providers found</p>
+      <p class="text-gray-500 text-sm mt-1">Try a different search term</p>
     </div>
   </section>
 
   <!-- FOOTER -->
-  <footer class="text-center text-xs text-gray-400 py-8 border-t border-gray-600">
-    <p>Data from Terraform Registry (HashiCorp). Visualizations by Apache ECharts.</p>
-    <p class="mt-2">This is an unofficial analytics tool. HashiCorp and Terraform are trademarks of HashiCorp, Inc.</p>
+  <footer class="text-center text-xs text-gray-400 py-8 border-t border-gray-600" role="contentinfo">
+    <p>
+      Data from
+      <a href="https://registry.terraform.io" target="_blank" rel="noopener"
+         class="text-green-500 hover:text-green-400 transition underline-offset-2 hover:underline">Terraform Registry</a>
+      (HashiCorp). Visualizations by
+      <a href="https://echarts.apache.org" target="_blank" rel="noopener"
+         class="text-green-500 hover:text-green-400 transition underline-offset-2 hover:underline">Apache ECharts</a>.
+    </p>
+    <p class="mt-1.5 text-gray-500">
+      Unofficial analytics tool · HashiCorp and Terraform are trademarks of HashiCorp, Inc.
+    </p>
   </footer>
 
 </main>
 
-<!-- PROVIDER DETAIL MODAL -->
-<div id="modal" class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50">
-  <div class="bg-gray-800 border border-gray-600 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+<!-- ══════════════════════════════════ PROVIDER DETAIL MODAL ══ -->
+<div id="modal"
+     class="fixed inset-0 bg-black bg-opacity-80 hidden items-center justify-center p-4 z-50"
+     role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div id="modal-inner"
+       class="bg-gray-800 border border-gray-600 rounded-2xl max-w-4xl w-full max-h-[90vh] overflow-y-auto">
     <div class="p-6">
-      <div class="flex items-start justify-between mb-4">
-        <div class="flex-1">
-          <div class="flex items-center gap-2 mb-2">
-            <span class="text-xs bg-gray-700 text-gray-300 px-3 py-1 rounded-full border border-gray-600" id="modalTier">—</span>
-            <h3 class="text-xl font-bold text-gray-100" id="modalTitle">—</h3>
+
+      <!-- Modal header -->
+      <div class="flex items-start justify-between mb-5">
+        <div class="flex-1 min-w-0 pr-4">
+          <div class="flex items-center gap-2 mb-2 flex-wrap">
+            <span class="text-xs bg-gray-700 text-gray-300 px-2.5 py-0.5 rounded-full border border-gray-600 flex-shrink-0"
+                  id="modalTier">—</span>
+            <h3 class="text-xl font-bold text-gray-100 break-all" id="modalTitle">—</h3>
           </div>
-          <div class="flex items-center gap-3">
-            <a id="modalRegistry" target="_blank" rel="noopener" class="text-sm text-green-500 hover:text-green-400 transition">
-              <i class="ph ph-arrow-square-out"></i> View in Registry
+          <div class="flex items-center gap-4 flex-wrap">
+            <a id="modalRegistry" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-1.5 text-sm text-green-500 hover:text-green-400 transition">
+              <i class="ph ph-arrow-square-out" aria-hidden="true"></i> View in Registry
             </a>
-            <a id="modalSource" target="_blank" rel="noopener" class="text-sm text-green-500 hover:text-green-400 transition">
-              <i class="ph ph-github-logo"></i> Source Code
+            <a id="modalSource" target="_blank" rel="noopener"
+               class="inline-flex items-center gap-1.5 text-sm text-green-500 hover:text-green-400 transition">
+              <i class="ph ph-github-logo" aria-hidden="true"></i> Source Code
             </a>
           </div>
         </div>
-        <button id="modalClose" class="w-8 h-8 flex items-center justify-center rounded-lg bg-gray-700 hover:bg-gray-600 text-gray-100 text-2xl transition">×</button>
+        <button id="modalClose"
+                class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-gray-700 hover:bg-gray-600 text-gray-400 hover:text-gray-100 transition focus:ring-2 focus:ring-green-500 focus:outline-none"
+                aria-label="Close modal">
+          <i class="ph ph-x text-base" aria-hidden="true"></i>
+        </button>
       </div>
 
-      <div class="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div>
+      <!-- Stats grid -->
+      <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-5">
+        <div class="bg-gray-900 rounded-xl p-3.5 border border-gray-600">
           <div class="text-xs text-gray-400 mb-1">Total Downloads</div>
-          <div class="text-xl font-bold text-gray-100" id="mTotal">—</div>
+          <div class="text-xl font-bold text-gray-100 tabular-nums" id="mTotal">—</div>
         </div>
-        <div>
+        <div class="bg-gray-900 rounded-xl p-3.5 border border-gray-600">
           <div class="text-xs text-gray-400 mb-1">Current Rank</div>
-          <div class="text-xl font-bold text-gray-100" id="mRankNow">—</div>
+          <div class="text-xl font-bold text-gray-100 tabular-nums" id="mRankNow">—</div>
         </div>
-        <div>
+        <div class="bg-gray-900 rounded-xl p-3.5 border border-gray-600">
           <div class="text-xs text-gray-400 mb-1">Rank Change</div>
-          <div class="text-xl font-bold text-gray-100" id="mRankDelta">—</div>
+          <div class="text-xl font-bold tabular-nums" id="mRankDelta">—</div>
         </div>
-        <div>
+        <div class="bg-gray-900 rounded-xl p-3.5 border border-gray-600">
           <div class="text-xs text-gray-400 mb-1">Period Downloads</div>
-          <div class="text-xl font-bold text-gray-100" id="mPeriod">—</div>
+          <div class="text-xl font-bold text-gray-100 tabular-nums" id="mPeriod">—</div>
         </div>
       </div>
 
+      <!-- Mini chart -->
       <div class="bg-gray-900 border border-gray-600 rounded-xl p-4 mb-4">
-        <h4 class="text-sm font-semibold text-gray-300 mb-2">Downloads Across Time Windows</h4>
-        <div id="modalChart" class="h-64"></div>
+        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+          Downloads Across Time Windows
+        </h4>
+        <div id="modalChart" class="h-56"></div>
       </div>
 
+      <!-- Description -->
       <div>
-        <h4 class="text-sm font-semibold text-gray-300 mb-2">Description</h4>
-        <p class="text-sm text-gray-300" id="modalDesc">—</p>
+        <h4 class="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-2">Description</h4>
+        <p class="text-sm text-gray-300 leading-relaxed" id="modalDesc">—</p>
       </div>
+
     </div>
   </div>
 </div>
+
+<!-- Scroll-to-top button -->
+<button id="scrollTop" aria-label="Scroll to top" title="Back to top">
+  <i class="ph ph-arrow-up" aria-hidden="true"></i>
+</button>
+
+<!-- Toast notification -->
+<div id="toast" role="alert" aria-live="assertive"></div>
 
 <script src="./app.js"></script>
 </body>
