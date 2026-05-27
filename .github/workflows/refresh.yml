@@ -32,8 +32,7 @@ jobs:
       - name: Setup Node.js 20
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'          # caches ~/.npm even with zero dependencies
+          node-version: 20  # caches ~/.npm even with zero dependencies
 
       - name: Fetch providers and build metrics
         env:
